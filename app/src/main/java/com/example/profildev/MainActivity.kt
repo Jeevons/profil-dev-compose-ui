@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,8 +17,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -48,6 +55,18 @@ class MainActivity : ComponentActivity() {
                         role = "Chef de projet IT",
                         description = "Passionné de technologie et d'astronomie. Je travaille comme chef de projet IT chez Laval Europe.",
                         competences = listOf("Gestion de projet", "Kotlin", "Git", "CI/CD", "Docker"),
+                        projets = listOf(
+                            Projet(
+                                titre = "Profil développeur",
+                                description = "Une fiche de présentation avec des composants réutilisables.",
+                                technologies = "Kotlin, Jetpack Compose"
+                            ),
+                            Projet(
+                                titre = "Product Explorer",
+                                description = "Un écran de détail pour présenter un produit.",
+                                technologies = "Kotlin, Jetpack Compose"
+                            )
+                        ),
                         contact = "linkedin.com/in/jeevons-e-3660a7297",
                         disponibilite = "Ouvert aux échanges sur de nouveaux projets",
                         modifier = Modifier.padding(innerPadding)
@@ -65,6 +84,7 @@ fun EcranProfil(
     role: String,
     description: String,
     competences: List<String>,
+    projets: List<Projet>,
     contact: String,
     disponibilite: String,
     modifier: Modifier = Modifier
@@ -75,6 +95,7 @@ fun EcranProfil(
         role = role,
         description = description,
         competences = competences,
+        projets = projets,
         contact = contact,
         disponibilite = disponibilite,
         onContacterClick = {
@@ -96,6 +117,7 @@ fun FicheProfil(
     role: String,
     description: String,
     competences: List<String>,
+    projets: List<Projet>,
     contact: String,
     disponibilite: String,
     onContacterClick: () -> Unit,
@@ -106,8 +128,12 @@ fun FicheProfil(
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = modifier
     ) {
-        // padding interne : espace entre le bord de la fiche et son contenu
-        Column(modifier = Modifier.padding(20.dp)) {
+        // Le contenu peut defiler pour garder le contact accessible sous les projets
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp)
+        ) {
             EnTeteProfil(nom = nom, role = role)
 
             Text(
@@ -117,12 +143,29 @@ fun FicheProfil(
 
             Text(
                 text = "Compétences",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleLarge
             )
-            for (competence in competences) {
-                Competence(
-                    nom = competence,
-                    modifier = Modifier.padding(top = 6.dp)
+            // LazyRow permet de faire defiler les competences horizontalement
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(competences) { competence ->
+                    Competence(nom = competence)
+                }
+            }
+
+            Text(
+                text = "Projets",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(top = 24.dp, bottom = 12.dp)
+            )
+            for (projet in projets) {
+                CarteProjet(
+                    projet = projet,
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
             }
 
@@ -196,12 +239,42 @@ fun AvatarProfil(modifier: Modifier = Modifier) {
 fun Competence(nom: String, modifier: Modifier = Modifier) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        shape = MaterialTheme.shapes.small,
         modifier = modifier
     ) {
         Text(
             text = nom,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
         )
+    }
+}
+
+// Une carte reutilisable pour chaque projet de la liste
+@Composable
+fun CarteProjet(projet: Projet, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = projet.titre,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = projet.description,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            Text(
+                text = projet.technologies,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 12.dp)
+            )
+        }
     }
 }
 
@@ -239,7 +312,7 @@ fun BoutonAction(texte: String, onClick: () -> Unit, modifier: Modifier = Modifi
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 360, heightDp = 800)
 @Composable
 fun ProfilChefDeProjetPreview() {
     ProfilDevTheme {
@@ -248,13 +321,25 @@ fun ProfilChefDeProjetPreview() {
             role = "Chef de projet IT",
             description = "Passionné de technologie et d'astronomie. Je travaille comme chef de projet IT chez Laval Europe.",
             competences = listOf("Gestion de projet", "Kotlin", "Git", "CI/CD", "Docker"),
+            projets = listOf(
+                Projet(
+                    titre = "Profil développeur",
+                    description = "Une fiche de présentation avec des composants réutilisables.",
+                    technologies = "Kotlin, Jetpack Compose"
+                ),
+                Projet(
+                    titre = "Product Explorer",
+                    description = "Un écran de détail pour présenter un produit.",
+                    technologies = "Kotlin, Jetpack Compose"
+                )
+            ),
             contact = "linkedin.com/in/jeevons-e-3660a7297",
             disponibilite = "Ouvert aux échanges sur de nouveaux projets"
         )
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 360, heightDp = 800)
 @Composable
 fun ProfilFullStackPreview() {
     ProfilDevTheme {
@@ -263,6 +348,13 @@ fun ProfilFullStackPreview() {
             role = "Développeuse full-stack",
             description = "Je travaille sur des applis web de A à Z, du back au front. J'aime quand le code est simple à relire.",
             competences = listOf("JavaScript", "React", "Node.js", "PostgreSQL"),
+            projets = listOf(
+                Projet(
+                    titre = "Portfolio (exemple)",
+                    description = "Un site pour présenter des projets web.",
+                    technologies = "JavaScript, React"
+                )
+            ),
             contact = "camille.martin@exemple.fr",
             disponibilite = "Pas disponible en ce moment"
         )
