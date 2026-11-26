@@ -1,12 +1,12 @@
 package com.example.profildev
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,7 +26,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,12 +36,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.profildev.ui.theme.ProfilDevTheme
@@ -89,25 +88,31 @@ fun EcranProfil(
     disponibilite: String,
     modifier: Modifier = Modifier
 ) {
-    // padding externe : c'est l'ecran (le parent) qui decide de l'espace autour de la fiche
-    FicheProfil(
-        nom = nom,
-        role = role,
-        description = description,
-        competences = competences,
-        projets = projets,
-        contact = contact,
-        disponibilite = disponibilite,
-        onContacterClick = {
-            // pour l'instant on ne fait rien, le bouton signale juste le clic
-        },
-        onDisponibiliteClick = {
-            // pareil, pas de logique ici pour le devoir
-        },
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    )
+    // Ce fond suit le theme, y compris dans les previews
+    Surface(
+        color = MaterialTheme.colorScheme.background,
+        modifier = modifier.fillMaxSize()
+    ) {
+        FicheProfil(
+            nom = nom,
+            role = role,
+            description = description,
+            competences = competences,
+            projets = projets,
+            contact = contact,
+            disponibilite = disponibilite,
+            onContacterClick = {
+                // Le callback reste vide pour ce devoir
+            },
+            onDisponibiliteClick = {
+                // Pas de logique supplementaire pour le moment
+            },
+            // padding externe : espace autour de la fiche
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
+    }
 }
 
 // La fiche complete avec toutes les infos
@@ -126,6 +131,7 @@ fun FicheProfil(
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.large,
         modifier = modifier
     ) {
         // Le contenu peut defiler pour garder le contact accessible sous les projets
@@ -278,24 +284,30 @@ fun CarteProjet(projet: Projet, modifier: Modifier = Modifier) {
     }
 }
 
-// Une info du type "Titre : valeur"
+// Le champ affiche une information que l'utilisateur ne peut pas modifier
 @Composable
 fun InfoSecondaire(titre: String, valeur: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Text(text = titre, style = MaterialTheme.typography.labelLarge)
-        Text(text = valeur)
-    }
+    OutlinedTextField(
+        value = valeur,
+        onValueChange = {},
+        label = { Text(text = titre) },
+        readOnly = true,
+        shape = MaterialTheme.shapes.small,
+        modifier = modifier.fillMaxWidth()
+    )
 }
 
-// Zone cliquable perso, donc il faut dire au lecteur d'ecran que c'est un bouton
+// La Surface cliquable gere elle-meme le role de bouton pour l'accessibilite
 @Composable
 fun ZoneDisponibilite(texte: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
-        color = Color(0xFFC8E6C9),
+        onClick = onClick,
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shape = MaterialTheme.shapes.small,
         modifier = modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = "Voir ma disponibilité : $texte" }
+            .heightIn(min = 48.dp)
     ) {
         Text(
             text = texte,
@@ -304,15 +316,31 @@ fun ZoneDisponibilite(texte: String, onClick: () -> Unit, modifier: Modifier = M
     }
 }
 
-// Bouton d'action reutilisable
+// L'icone accompagne le texte, qui annonce deja l'action au lecteur d'ecran
 @Composable
 fun BoutonAction(texte: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(onClick = onClick, modifier = modifier) {
+    Button(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        modifier = modifier
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.icone_contact),
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
         Text(text = texte)
     }
 }
 
-@Preview(showBackground = true, widthDp = 360, heightDp = 800)
+@Preview(
+    name = "Profil clair",
+    showBackground = true,
+    widthDp = 360,
+    heightDp = 800,
+    uiMode = Configuration.UI_MODE_NIGHT_NO
+)
 @Composable
 fun ProfilChefDeProjetPreview() {
     ProfilDevTheme {
@@ -339,7 +367,13 @@ fun ProfilChefDeProjetPreview() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 360, heightDp = 800)
+@Preview(
+    name = "Profil sombre",
+    showBackground = true,
+    widthDp = 360,
+    heightDp = 800,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
 @Composable
 fun ProfilFullStackPreview() {
     ProfilDevTheme {
